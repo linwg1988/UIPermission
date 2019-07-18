@@ -1,14 +1,15 @@
 package org.linwg.lib.uipermission;
 
+import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -19,16 +20,18 @@ import org.linwg.lib.api.UIPermissions;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
-    @LUIPermission(per = {"A", "C"}, relation = PerRelation.OR,actingOnClick = true,toastHint = "fasfasfa")
+public class MainActivity extends BaseActivity {
+    @LUIPermission(per = {"A", "C"}, relation = PerRelation.OR, actingOnClick = true, toastHint = "fasfasfa")
     FloatingActionButton fab;
-    @LUIPermission(per = {"A", "B"},actingOnClick = true)
+    @LUIPermission(per = {"A", "B"}, actingOnClick = true)
     TextView textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Log.e("onClick","onCreate="+System.currentTimeMillis());
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         fab = findViewById(R.id.fab);
@@ -69,7 +72,38 @@ public class MainActivity extends AppCompatActivity {
         obj.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.e("onClick","startActivity="+System.currentTimeMillis());
                 startActivity(new Intent(MainActivity.this, MainActivity.class));
+                Log.e("onClick","startActivityOver="+System.currentTimeMillis());
+//                ViewGroup decorView = (ViewGroup) getWindow().getDecorView();
+//                decorView.setDrawingCacheEnabled(true);
+//                decorView.buildDrawingCache();
+//                Bitmap bitmap = decorView.getDrawingCache();
+//                ImageView view = decorView.findViewById(R.id.ivMirror);
+//                if(view == null){
+//                    view = new ImageView(mContext);
+//                    view.setId(R.id.ivMirror);
+//                    view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
+//                    decorView.addView(view);
+//                }
+//                ActivityStack.get().setBitmap(bitmap);
+//                view.setImageBitmap(ActivityStack.get().getBitmap());
+//                view.setVisibility(View.VISIBLE);
+//                decorView.setDrawingCacheEnabled(false);
+                ValueAnimator valueAnimator = ValueAnimator.ofInt(250);
+                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    long l = System.currentTimeMillis();
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        Log.e("onAnimationUpdate", "value=" + animation.getAnimatedValue());
+                        Log.e("onAnimationUpdate", "time=" + (System.currentTimeMillis() - l));
+                        l = System.currentTimeMillis();
+                    }
+                });
+                valueAnimator.setInterpolator(new DecelerateInterpolator());
+                valueAnimator.setDuration(250);
+                valueAnimator.start();
+                Log.e("onClick","getBitmapOver="+System.currentTimeMillis());
             }
         });
 
