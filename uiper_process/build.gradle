@@ -12,7 +12,7 @@ sourceCompatibility = "1.8"
 targetCompatibility = "1.8"
 
 publish {
-    artifactId = 'uipermission-process'
+    artifactId = 'uipermission-complier'
     userOrg = rootProject.userOrg
     groupId = rootProject.groupId
     uploadName = rootProject.uploadName
