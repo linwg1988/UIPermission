@@ -14,6 +14,8 @@ public class ProxyInfo {
     public String activityName;
     public String activityFullName;
     public List<FieldInfo> fieldInfoList = new ArrayList<>();
+    public List<String> grantPathList = new ArrayList<>();
+    public List<String> grantClassList = new ArrayList<>();
 
     public ProxyInfo() {
     }
@@ -28,6 +30,20 @@ public class ProxyInfo {
                 '}';
     }
 
+    public void collectGrantClass() {
+        for (FieldInfo fieldInfo : fieldInfoList) {
+            grantPathList.addAll(fieldInfo.grantStrategy);
+        }
+        for (String path : grantPathList) {
+            grantClassList.add(classPathToClassName(path));
+        }
+    }
+
+    private String classPathToClassName(String path) {
+        int index = path.lastIndexOf(".");
+        return index == -1 ? path : path.substring(index + 1);
+    }
+
 
     public static class FieldInfo {
         public String[] per;
@@ -38,6 +54,7 @@ public class ProxyInfo {
         public String upCaseFieldName;
         public boolean actingOnClick;
         public String toastHint;
+        public List<String> grantStrategy;
 
         @Override
         public String toString() {

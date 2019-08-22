@@ -16,4 +16,6 @@ public interface IPermissionProxy<T> {
     T getHost();
 
     void release();
+
+    void onGrantConditionChange();
 }

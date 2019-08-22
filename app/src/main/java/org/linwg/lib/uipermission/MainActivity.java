@@ -1,15 +1,14 @@
 package org.linwg.lib.uipermission;
 
-import android.animation.ValueAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -20,18 +19,29 @@ import org.linwg.lib.api.UIPermissions;
 
 import java.util.List;
 
-public class MainActivity extends BaseActivity {
-    @LUIPermission(per = {"A", "C"}, relation = PerRelation.OR, actingOnClick = true, toastHint = "fasfasfa")
+public class MainActivity extends AppCompatActivity {
+    @LUIPermission(value = {"A", "C"}, relation = PerRelation.OR, actingOnClick = true, toastHint = "This click event has been intercepted.")
     FloatingActionButton fab;
-    @LUIPermission(per = {"A", "B"}, actingOnClick = true)
+    @LUIPermission("A")
     TextView textView;
+    @LUIPermission("B")
+    TextView tvTextB;
+    @LUIPermission("C")
+    TextView tvTextC;
+    @LUIPermission(value = {"A", "B"}, relation = PerRelation.OR)
+    TextView tvTextAoB;
+    @LUIPermission({"A", "B"})
+    TextView tvTextAaB;
+    @LUIPermission(grantStrategy = {SizeGrant.class})
+    TextView tvTextPer4;
+    @LUIPermission(grantStrategy = {SpecialGrant.class})
+    TextView tvTextPerACnB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.e("MainActivity", "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Log.e("onClick","onCreate="+System.currentTimeMillis());
-
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         fab = findViewById(R.id.fab);
@@ -42,9 +52,15 @@ public class MainActivity extends BaseActivity {
                         .setAction("Action", null).show();
             }
         });
-
         final EditText etPer = findViewById(R.id.etPer);
+        final TextView tvPerList = findViewById(R.id.tvPerList);
         textView = findViewById(R.id.tvText);
+        tvTextB = findViewById(R.id.tvTextB);
+        tvTextC = findViewById(R.id.tvTextC);
+        tvTextAoB = findViewById(R.id.tvTextAoB);
+        tvTextAaB = findViewById(R.id.tvTextAaB);
+        tvTextPer4 = findViewById(R.id.tvTextPer4);
+        tvTextPerACnB = findViewById(R.id.tvTextPerACnB);
         Button button = findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,6 +70,7 @@ public class MainActivity extends BaseActivity {
                 if (!permissionList.contains(s)) {
                     permissionList.add(s);
                 }
+                tvPerList.setText("Current permission:" + listToString(permissionList));
                 UIPermissions.setPermissionList(permissionList);
             }
         });
@@ -64,51 +81,32 @@ public class MainActivity extends BaseActivity {
                 List<String> permissionList = UIPermissions.getPermissionList();
                 String s = etPer.getText().toString();
                 permissionList.remove(s);
+                tvPerList.setText("Current permission:" + listToString(permissionList));
                 UIPermissions.setPermissionList(permissionList);
             }
         });
         View obj = findViewById(R.id.button3);
-
         obj.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.e("onClick","startActivity="+System.currentTimeMillis());
+                Log.e("onClick", "startActivity=" + System.currentTimeMillis());
                 startActivity(new Intent(MainActivity.this, MainActivity.class));
-                Log.e("onClick","startActivityOver="+System.currentTimeMillis());
-//                ViewGroup decorView = (ViewGroup) getWindow().getDecorView();
-//                decorView.setDrawingCacheEnabled(true);
-//                decorView.buildDrawingCache();
-//                Bitmap bitmap = decorView.getDrawingCache();
-//                ImageView view = decorView.findViewById(R.id.ivMirror);
-//                if(view == null){
-//                    view = new ImageView(mContext);
-//                    view.setId(R.id.ivMirror);
-//                    view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
-//                    decorView.addView(view);
-//                }
-//                ActivityStack.get().setBitmap(bitmap);
-//                view.setImageBitmap(ActivityStack.get().getBitmap());
-//                view.setVisibility(View.VISIBLE);
-//                decorView.setDrawingCacheEnabled(false);
-                ValueAnimator valueAnimator = ValueAnimator.ofInt(250);
-                valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                    long l = System.currentTimeMillis();
-                    @Override
-                    public void onAnimationUpdate(ValueAnimator animation) {
-                        Log.e("onAnimationUpdate", "value=" + animation.getAnimatedValue());
-                        Log.e("onAnimationUpdate", "time=" + (System.currentTimeMillis() - l));
-                        l = System.currentTimeMillis();
-                    }
-                });
-                valueAnimator.setInterpolator(new DecelerateInterpolator());
-                valueAnimator.setDuration(250);
-                valueAnimator.start();
-                Log.e("onClick","getBitmapOver="+System.currentTimeMillis());
+                Log.e("onClick", "startActivityOver=" + System.currentTimeMillis());
             }
         });
-
-
+        tvPerList.setText("Current permission:" + listToString(UIPermissions.getPermissionList()));
         UIPermissions.subscribe(this);
+    }
+
+    private String listToString(List<String> list) {
+        String s = "";
+        for (int i = 0; i < list.size(); i++) {
+            s += list.get(i);
+            if (i < list.size() - 1) {
+                s += ",";
+            }
+        }
+        return s;
     }
 
     @Override
@@ -121,22 +119,5 @@ public class MainActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         UIPermissions.unsubscribe(this);
-    }
-
-    public static class ProxyClickListener implements View.OnClickListener {
-
-        public ProxyClickListener(View.OnClickListener listener) {
-            this.listener = listener;
-        }
-
-        View.OnClickListener listener;
-
-        @Override
-        public void onClick(View v) {
-            Log.e("ProxyClickListener", "onClick");
-            if (listener != null) {
-                listener.onClick(v);
-            }
-        }
     }
 }

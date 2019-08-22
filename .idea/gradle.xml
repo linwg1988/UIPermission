@@ -8,15 +8,6 @@
         </compositeConfiguration>
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
-        <option name="modules">
-          <set>
-            <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/uiper_annotation" />
-            <option value="$PROJECT_DIR$/uiper_api" />
-            <option value="$PROJECT_DIR$/uiper_process" />
-          </set>
-        </option>
         <option name="resolveModulePerSourceSet" value="false" />
       </GradleProjectSettings>
     </option>

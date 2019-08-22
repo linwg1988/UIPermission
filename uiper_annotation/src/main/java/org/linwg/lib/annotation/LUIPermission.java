@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface LUIPermission {
 
-    String[] per();
+    String[] value() default {};
 
     boolean actingOnClick() default false;
 
@@ -23,5 +23,5 @@ public @interface LUIPermission {
 
     PerRelation relation() default PerRelation.AND;
 
-    Class<? extends IPerGrant> grantStrategy();
+    Class<? extends IPerGrant>[] grantStrategy() default {};
 }

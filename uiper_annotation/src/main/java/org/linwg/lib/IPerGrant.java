@@ -3,16 +3,18 @@ package org.linwg.lib;
 import java.util.List;
 
 /**
- * 如果权限code无法满足UI权限的判断，额外使用此接口的实现类进行判断
+ *If permission code could not judging the UI permission enough,
+ * Use the implementation class of this interface to make additional judgments
  *
  * @author adr
  */
 public interface IPerGrant {
+
     /**
-     * 使用额外的逻辑告知系统是否满足权限
-     * @param perList 该控件的权限
-     * @param relation 权限之间的关系
-     * @return 权限是否通过
+     * Use additional logic to tell the system if the permissions are met
+     * @param perList The permissions of the control
+     * @param relation Relationship between permissions
+     * @return Whether the permission is passed
      */
     boolean perGrant(List<String> perList ,PerRelation relation);
 }

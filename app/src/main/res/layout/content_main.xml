@@ -14,52 +14,199 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
-        android:text="Hello World!"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:background="#ff0"
+        android:padding="12dp"
+        android:text="I require per A"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintHorizontal_bias="0.756"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/ivScreen"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/button3"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/tvTextB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:background="#ff0"
+        android:padding="12dp"
+        android:text="I require per B"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tvText"
+        app:layout_constraintTop_toBottomOf="@+id/button3"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/tvTextC"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:background="#ff0"
+        android:padding="12dp"
+        android:text="I require per C"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tvTextB"
+        app:layout_constraintTop_toBottomOf="@+id/button3"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/tvTextAoB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:background="#ff0"
+        android:padding="12dp"
+        android:text="I require per A or B"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvText"
+        app:layout_constraintVertical_bias="0.015" />
+
+    <TextView
+        android:id="@+id/tvTextAaB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:background="#ff0"
+        android:padding="12dp"
+        android:text="I require per A and B"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.031"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tvTextAoB"
+        app:layout_constraintTop_toBottomOf="@+id/tvText"
+        app:layout_constraintVertical_bias="0.018" />
+
+    <TextView
+        android:id="@+id/tvTextPer4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:background="#ff0"
+        android:padding="12dp"
+        android:text="I require per's size = 4"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvTextAoB"
+        app:layout_constraintVertical_bias="0.018" />
+
+    <TextView
+        android:id="@+id/tvTextPerACnB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:background="#ff0"
+        android:padding="12dp"
+        android:text="I require per A and C but without B"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.036"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tvTextPer4"
+        app:layout_constraintTop_toBottomOf="@+id/tvTextAoB"
+        app:layout_constraintVertical_bias="0.018" />
+
+    <TextView
+        android:id="@+id/tvPerList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:text="Current permission:"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_editor_absoluteX="0dp" />
 
     <EditText
         android:id="@+id/etPer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="permission code"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:background="#00000000"
+        android:hint="Input permission code for add or remove"
+        android:padding="12dp"
+        android:textSize="12sp"
+        app:layout_constraintTop_toBottomOf="@+id/tvPerList"
+        tools:layout_editor_absoluteX="0dp" />
 
     <Button
         android:id="@+id/button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Add Peermission"
-        app:layout_constraintTop_toBottomOf="@+id/etPer" />
+        android:layout_marginTop="8dp"
+        android:text="Add Permission"
+        app:layout_constraintTop_toBottomOf="@+id/etPer"
+        tools:layout_editor_absoluteX="0dp" />
 
     <Button
         android:id="@+id/button2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Remove Peermission"
-        app:layout_constraintTop_toBottomOf="@+id/button" />
+        android:layout_marginTop="8dp"
+        android:text="Remove Permission"
+        app:layout_constraintTop_toBottomOf="@+id/button"
+        tools:layout_editor_absoluteX="0dp" />
 
     <Button
         android:id="@+id/button3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:text="NewPage"
-        app:layout_constraintTop_toBottomOf="@+id/button2" />
-
-    <ImageView
-        android:id="@+id/ivScreen"
-        android:layout_width="203dp"
-        android:layout_height="300dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginBottom="8dp"
-        android:background="#5500ffff"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/button2"
+        tools:layout_editor_absoluteX="0dp" />
 
 </android.support.constraint.ConstraintLayout>

@@ -8,8 +8,10 @@ import org.linwg.lib.annotation.LUIPermission;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,6 +26,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.MirroredTypesException;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
@@ -71,7 +75,6 @@ public class UIPermissionProcessor extends AbstractProcessor {
                 break;
             }
 
-
             VariableElement field = (VariableElement) element;
             Element enclosingElement = field.getEnclosingElement();
             TypeElement activity = (TypeElement) enclosingElement;
@@ -88,14 +91,27 @@ public class UIPermissionProcessor extends AbstractProcessor {
 
             String simpleName = field.getSimpleName().toString();
             LUIPermission annotation = field.getAnnotation(LUIPermission.class);
-            String[] per = annotation.per();
-            if (per.length == 0) {
-                error(field, "Filed %s request permission list be assignment.", field.getSimpleName());
+            String[] per = annotation.value();
+            List<String> grantStrategy = new ArrayList<>();
+            try {
+                annotation.grantStrategy();
+            } catch (MirroredTypesException e) {
+                List<? extends TypeMirror> typeMirrors = e.getTypeMirrors();
+                if (typeMirrors.size() > 0) {
+                    for (TypeMirror typeMirror : typeMirrors) {
+                        grantStrategy.add(typeMirror.toString());
+                    }
+                }
             }
+            if (per.length == 0 && grantStrategy.size() == 0) {
+                error(field, "Filed %s request permission or grant strategy list be assignment.", field.getSimpleName());
+            }
+
             PerRelation value = annotation.relation();
             ProxyInfo.FieldInfo item = new ProxyInfo.FieldInfo();
             item.per = per;
             item.value = value;
+            item.grantStrategy = grantStrategy;
             item.className = field.asType().toString();
             item.simpleClassName = item.className.replace(item.className.substring(0, item.className.lastIndexOf(".") + 1), "");
             item.fieldName = simpleName;
@@ -111,6 +127,7 @@ public class UIPermissionProcessor extends AbstractProcessor {
             Set<String> strings = map.keySet();
             for (String key : strings) {
                 ProxyInfo proxyInfos = map.get(key);
+                proxyInfos.collectGrantClass();
                 StringBuilder sb = new StringBuilder();
                 sb.append("package ");
                 sb.append(proxyInfos.packageName);
@@ -121,12 +138,18 @@ public class UIPermissionProcessor extends AbstractProcessor {
                     sb.append(field.className);
                     sb.append(";\n");
                 }
+                for (String path : proxyInfos.grantPathList) {
+                    sb.append("import ");
+                    sb.append(path);
+                    sb.append(";\n");
+                }
                 sb.append("\n");
                 sb.append("import org.linwg.lib.PerRelation;\n\n");
                 sb.append("import android.widget.Toast;\n");
                 sb.append("import org.linwg.lib.api.IPermissionProxy;\n");
                 sb.append("import org.linwg.lib.api.InterceptOnClickListener;\n");
                 sb.append("import org.linwg.lib.api.UIPermissions;\n\n");
+                sb.append("import org.linwg.lib.IPerGrant;\n\n");
                 sb.append("import java.lang.reflect.Field;\n");
                 sb.append("import java.util.ArrayList;\n");
                 sb.append("import java.util.Arrays;\n");
@@ -164,6 +187,7 @@ public class UIPermissionProcessor extends AbstractProcessor {
                 sb.append("\tprivate ");
                 sb.append(proxyInfos.activityName);
                 sb.append(" host;\n");
+                sb.append("\tprivate List<String> bak = new ArrayList<>();\n");
                 sb.append("\n");
 
                 sb.append("\t@Override\n");
@@ -171,7 +195,6 @@ public class UIPermissionProcessor extends AbstractProcessor {
                 sb.append(proxyInfos.activityName);
                 sb.append(" t){\n");
                 sb.append("\t\tthis.host = t;\n");
-                sb.append("\t\tList<String> permissionList = UIPermissions.getPermissionList();\n");
                 for (ProxyInfo.FieldInfo field : proxyInfos.fieldInfoList) {
                     sb.append("\t\tthis.");
                     sb.append(field.fieldName);
@@ -180,9 +203,29 @@ public class UIPermissionProcessor extends AbstractProcessor {
                     sb.append(";\n");
                 }
                 for (ProxyInfo.FieldInfo field : proxyInfos.fieldInfoList) {
-                    sb.append("\t\tinit");
-                    sb.append(field.upCaseFieldName);
-                    sb.append("(permissionList);\n");
+                    sb.append("\t\tinitView(");
+                    sb.append(field.fieldName);
+                    sb.append(",");
+                    sb.append(field.fieldName);
+                    sb.append("PerList,");
+                    sb.append("PerRelation.");
+                    if (field.value == PerRelation.AND) {
+                        sb.append("AND,");
+                    } else {
+                        sb.append("OR,");
+                    }
+                    sb.append(field.actingOnClick ? "true," : "false,");
+                    sb.append("\"");
+                    sb.append(field.toastHint);
+                    sb.append("\"");
+                    if (field.grantStrategy.size() > 0) {
+                        for (String path : field.grantStrategy) {
+                            sb.append(",");
+                            sb.append(classPathToClassName(path));
+                            sb.append(".class");
+                        }
+                    }
+                    sb.append(");\n");
                 }
                 sb.append("\t\tSet<String> allPer = new HashSet<>();\n");
                 for (ProxyInfo.FieldInfo field : proxyInfos.fieldInfoList) {
@@ -191,118 +234,42 @@ public class UIPermissionProcessor extends AbstractProcessor {
                     sb.append("PerList);\n");
                 }
                 sb.append("\t\tUIPermissions.addPermissionInstance(this, new ArrayList<String>(allPer));\n");
+                if (proxyInfos.grantClassList.size() > 0) {
+                    sb.append("\t\tUIPermissions.addPerGrantInstance(this");
+                    for (String name : proxyInfos.grantClassList) {
+                        sb.append(", ");
+                        sb.append(name);
+                        sb.append(".class");
+                    }
+                    sb.append(");\n");
+                }
                 sb.append("\t}\n\n");
 
-                for (ProxyInfo.FieldInfo field : proxyInfos.fieldInfoList) {
-                    sb.append("\tprivate void init");
-                    sb.append(field.upCaseFieldName);
-                    sb.append("(List<String> permissionList) {\n");
-
-                    sb.append("\t\tif(this.");
-                    sb.append(field.fieldName);
-                    sb.append(" != null){\n");
-//                    sb.append("\t\t\tArrayList<String> bakList = new ArrayList<>(");
-//                    sb.append(field.fieldName);
-//                    sb.append("PerList);\n");
-//                    sb.append("\t\t\tbakList.retainAll(permissionList);\n");
-//                    sb.append("\t\t\tint retainSize = bakList.size();\n");
-
-                    sb.append("\t\t\tthis.");
-                    sb.append(field.fieldName);
-                    sb.append(".setTag(org.linwg.lib.api.R.id.ui_per_list, ");
-                    sb.append(field.fieldName);
-                    sb.append("PerList);\n");
-                    sb.append("\t\t\tthis.");
-                    sb.append(field.fieldName);
-                    sb.append(".setTag(org.linwg.lib.api.R.id.ui_per_relation, ");
-                    sb.append("PerRelation.");
-                    if (field.value == PerRelation.AND) {
-                        sb.append("AND);\n");
-                    } else {
-                        sb.append("OR);\n");
-                    }
-
-                    if (field.actingOnClick) {
-                        sb.append("\t\t\ttry {\n");
-                        sb.append("\t\t\t\tClass<? extends View> aClass = View.class;\n");
-                        sb.append("\t\t\t\tField mListenerInfo = aClass.getDeclaredField(\"mListenerInfo\");\n");
-                        sb.append("\t\t\t\tmListenerInfo.setAccessible(true);\n");
-                        sb.append("\t\t\t\tObject o = mListenerInfo.get(this.");
-                        sb.append(field.fieldName);
-                        sb.append(");\n");
-                        sb.append("\t\t\t\tif(o == null){\n");
-                        sb.append("\t\t\t\t\treturn;\n");
-                        sb.append("\t\t\t\t}\n");
-                        sb.append("\t\t\t\tClass<?> lisClazz = o.getClass();\n");
-                        sb.append("\t\t\t\tField mOnClickListener = lisClazz.getField(\"mOnClickListener\");\n");
-                        sb.append("\t\t\t\tObject lis = mOnClickListener.get(o);\n");
-                        sb.append("\t\t\t\tif(lis != null){\n");
-                        sb.append("\t\t\t\t\tmOnClickListener.setAccessible(true);\n");
-                        sb.append("\t\t\t\t\tmOnClickListener.set(o, new InterceptOnClickListener((View.OnClickListener) lis) {\n");
-                        sb.append("\t\t\t\t\t\t@Override\n");
-                        sb.append("\t\t\t\t\t\tpublic void onClick(View v) {\n");
-                        sb.append("\t\t\t\t\t\t\tif (!UIPermissions.permissionPrivilege(");
-                        sb.append(field.fieldName);
-                        sb.append("PerList, ");
-                        sb.append(field.value == PerRelation.AND ? "false" : "true");
-                        sb.append(")) {\n");
-                        sb.append("\t\t\t\t\t\t\t\tToast.makeText(host, ");
-                        if (field.toastHint == null || field.toastHint.equals("")) {
-                            sb.append("UIPermissions.getConfigResource(\"default_hint\")");
-                        } else {
-                            sb.append("\"");
-                            sb.append(field.toastHint);
-                            sb.append("\"");
-                        }
-                        sb.append(", Toast.LENGTH_SHORT).show();\n");
-                        sb.append("\t\t\t\t\t\t\t\treturn;\n");
-                        sb.append("\t\t\t\t\t\t\t}\n");
-                        sb.append("\t\t\t\t\t\t\tthis.target.onClick(v);\n");
-                        sb.append("\t\t\t\t\t\t}\n");
-                        sb.append("\t\t\t\t\t});\n");
-                        sb.append("\t\t\t\t}\n");
-                        sb.append("\t\t\t} catch (NoSuchFieldException e) {\n");
-                        sb.append("\t\t\t\t// do nothing\n");
-                        sb.append("\t\t\t} catch (IllegalAccessException e) {\n");
-                        sb.append("\t\t\t\t// do nothing\n");
-                        sb.append("\t\t\t}\n");
-                    } else {
-                        if (field.value == PerRelation.AND) {
-                            sb.append("\t\t\tif(retainSize == ");
-                            sb.append(field.fieldName);
-                            sb.append("PerList.size()){\n");
-                            sb.append("\t\t\t\tthis.");
-                            sb.append(field.fieldName);
-                            sb.append(".setVisibility(View.VISIBLE);\n");
-                            sb.append("\t\t\t}else{\n");
-                            sb.append("\t\t\t\tthis.");
-                            sb.append(field.fieldName);
-                            sb.append(".setVisibility(View.GONE);\n");
-                            sb.append("\t\t\t}");
-                        } else {
-                            sb.append("\t\t\tif(retainSize > 0){\n");
-                            sb.append("\t\t\t\tthis.");
-                            sb.append(field.fieldName);
-                            sb.append(".setVisibility(View.VISIBLE);\n");
-                            sb.append("\t\t\t}else{\n");
-                            sb.append("\t\t\t\tthis.");
-                            sb.append(field.fieldName);
-                            sb.append(".setVisibility(View.GONE);\n");
-                            sb.append("\t\t\t}");
-                        }
-                    }
-                    sb.append("\n");
-
-
-                    sb.append("\t\t}\n");
-                    sb.append("\t}\n\n");
-                }
+                sb.append("\tprivate void initView(View view, List<String> viewPerList, PerRelation relation, boolean actingOnClick, String actingHint, Class<? extends IPerGrant>... classes) {\n");
+                sb.append("\t\tif (view == null) {\n");
+                sb.append("\t\t\treturn;\n");
+                sb.append("\t\t}\n");
+                sb.append("\t\tif (actingOnClick) {\n");
+                sb.append("\t\t\tUIPermissions.actingOnClick(view, viewPerList, relation, actingHint, classes);\n");
+                sb.append("\t\t} else {\n");
+                sb.append("\t\t\tboolean perGrant;\n");
+                sb.append("\t\t\tif (classes == null || classes.length == 0) {\n");
+                sb.append("\t\t\t\tperGrant = UIPermissions.permissionPrivilege(viewPerList, false);\n");
+                sb.append("\t\t\t} else {\n");
+                sb.append("\t\t\t\tperGrant = UIPermissions.perGrant(viewPerList, relation, classes);\n");
+                sb.append("\t\t\t}\n");
+                sb.append("\t\t\tview.setVisibility(perGrant ? View.VISIBLE : View.GONE);\n");
+                sb.append("\t\t}\n");
+                sb.append("\t}\n\n");
 
                 sb.append("\t@Override\n");
                 sb.append("\tpublic void onPermissionAdd(List<String> per) {\n");
-                sb.append("\t\tList<String> permissionList = UIPermissions.getPermissionList();\n");
-                sb.append("\t\tArrayList<String> bak = new ArrayList<>(per);\n");
+                sb.append("\t\tbak.clear();\n");
+                sb.append("\t\tbak.addAll(per);\n");
                 for (ProxyInfo.FieldInfo field : proxyInfos.fieldInfoList) {
+                    if (field.actingOnClick || field.grantStrategy.size() > 0) {
+                        continue;
+                    }
                     sb.append("\t\tif (this.");
                     sb.append(field.fieldName);
                     sb.append(" != null && this.");
@@ -312,9 +279,22 @@ public class UIPermissionProcessor extends AbstractProcessor {
                     sb.append(field.fieldName);
                     sb.append("PerList);\n");
                     sb.append("\t\t\tif (bak.size() > 0) {\n");
-                    sb.append("\t\t\t\tinit");
-                    sb.append(field.upCaseFieldName);
-                    sb.append("(permissionList);\n");
+                    sb.append("\t\t\t\tinitView(");
+                    sb.append(field.fieldName);
+                    sb.append(", ");
+                    sb.append(field.fieldName);
+                    sb.append("PerList, ");
+                    sb.append("PerRelation.");
+                    if (field.value == PerRelation.AND) {
+                        sb.append("AND, ");
+                    } else {
+                        sb.append("OR, ");
+                    }
+                    sb.append("false, ");
+                    sb.append("\"");
+                    sb.append(field.toastHint);
+                    sb.append("\"");
+                    sb.append(");\n");
                     sb.append("\t\t\t}\n");
                     sb.append("\t\t\tbak.clear();\n");
                     sb.append("\t\t\tbak.addAll(per);\n");
@@ -324,9 +304,12 @@ public class UIPermissionProcessor extends AbstractProcessor {
 
                 sb.append("\t@Override\n");
                 sb.append("\tpublic void onPermissionRemove(List<String> per) {\n");
-                sb.append("\t\tList<String> permissionList = UIPermissions.getPermissionList();\n");
-                sb.append("\t\tArrayList<String> bak = new ArrayList<>(per);\n");
+                sb.append("\t\tbak.clear();\n");
+                sb.append("\t\tbak.addAll(per);\n");
                 for (ProxyInfo.FieldInfo field : proxyInfos.fieldInfoList) {
+                    if (field.actingOnClick || field.grantStrategy.size() > 0) {
+                        continue;
+                    }
                     sb.append("\t\tif (this.");
                     sb.append(field.fieldName);
                     sb.append(" != null && this.");
@@ -336,12 +319,61 @@ public class UIPermissionProcessor extends AbstractProcessor {
                     sb.append(field.fieldName);
                     sb.append("PerList);\n");
                     sb.append("\t\t\tif (bak.size() > 0) {\n");
-                    sb.append("\t\t\t\tinit");
-                    sb.append(field.upCaseFieldName);
-                    sb.append("(permissionList);\n");
+                    sb.append("\t\t\t\tinitView(");
+                    sb.append(field.fieldName);
+                    sb.append(", ");
+                    sb.append(field.fieldName);
+                    sb.append("PerList, ");
+                    sb.append("PerRelation.");
+                    if (field.value == PerRelation.AND) {
+                        sb.append("AND, ");
+                    } else {
+                        sb.append("OR, ");
+                    }
+                    sb.append("false, ");
+                    sb.append("\"");
+                    sb.append(field.toastHint);
+                    sb.append("\"");
+                    sb.append(");\n");
                     sb.append("\t\t\t}\n");
                     sb.append("\t\t\tbak.clear();\n");
                     sb.append("\t\t\tbak.addAll(per);\n");
+                    sb.append("\t\t}\n");
+                }
+                sb.append("\t}\n\n");
+
+                sb.append("\t@Override\n");
+                sb.append("\tpublic void onGrantConditionChange() {\n");
+                for (ProxyInfo.FieldInfo field : proxyInfos.fieldInfoList) {
+                    if (field.actingOnClick || field.grantStrategy.size() == 0) {
+                        continue;
+                    }
+                    sb.append("\t\tif (this.");
+                    sb.append(field.fieldName);
+                    sb.append(" != null) {\n");
+                    sb.append("\t\t\tinitView(");
+                    sb.append(field.fieldName);
+                    sb.append(", ");
+                    sb.append(field.fieldName);
+                    sb.append("PerList, ");
+                    sb.append("PerRelation.");
+                    if (field.value == PerRelation.AND) {
+                        sb.append("AND, ");
+                    } else {
+                        sb.append("OR, ");
+                    }
+                    sb.append("false, ");
+                    sb.append("\"");
+                    sb.append(field.toastHint);
+                    sb.append("\"");
+                    if (field.grantStrategy.size() > 0) {
+                        for (String path : field.grantStrategy) {
+                            sb.append(", ");
+                            sb.append(classPathToClassName(path));
+                            sb.append(".class");
+                        }
+                    }
+                    sb.append(");\n");
                     sb.append("\t\t}\n");
                 }
                 sb.append("\t}\n\n");
@@ -399,6 +431,11 @@ public class UIPermissionProcessor extends AbstractProcessor {
         return true;
     }
 
+    private String classPathToClassName(String path) {
+        int index = path.lastIndexOf(".");
+        return index == -1 ? path : path.substring(index + 1);
+    }
+
     private void error(Element element, String message, Object... args) {
         if (args == null) {
             return;
@@ -407,5 +444,15 @@ public class UIPermissionProcessor extends AbstractProcessor {
             message = String.format(message, args);
         }
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, message, element);
+    }
+
+    private void worm(Element element, String message, Object... args) {
+        if (args == null) {
+            return;
+        }
+        if (args.length > 0) {
+            message = String.format(message, args);
+        }
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.WARNING, message, element);
     }
 }
